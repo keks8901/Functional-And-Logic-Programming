@@ -1,0 +1,102 @@
+exec (acomp a) (0,s,[]) == (length (acomp a), s, [aval a s])
+
+Proof:
+--TODO Task 4
+I have decided to analyse this function be providing multiple case scenarios.
+This will verify correctness of your compiler for all possible arithmetic expressions.
+The assumption that I make is that user input will be correct and not empty.
+
+//
+
+Inductive Case 1: Case of acomp has (N Val) and an empty State (it could be non empty, but it will not make a difference, because N does not interact with it)
+
+exec (acomp (N Val)) (0,empty,[]) -> Config
+[applying acomp] = exec [LOADI Val] (0,empty,[])
+[applying exec] = iexec (LOADI Val) (0,empty,[])
+[applying iexec] = (1,fromList [],[Val])
+
+(length (acomp (N Val)), empty, [aval (N Val) empty])
+[applying acomp] = (length [LOADI Val]), empty, [aval (N Val) empty])
+[applying aval] = (length [LOADI Val]), empty, [Val])
+[applying empty] = (length [LOADI Val]), (), [Val])
+[applying length] = (1,(),[Val])
+
+Therefore we can say that: exec (acomp (N Val)) (0,empty,[]) == (length (acomp (N Val)), empty, [aval (N Val) empty]) -> True
+
+//
+
+Inductive Case 2: Case of acomp has (V Vname) and a non-empty State with "Vname" in it
+
+exec (acomp (V Vname)) (0,fromList [(Vname,Val)],[]) -> Config
+[applying acomp] = exec [LOAD Vname] (0,fromList [(Vname,Val)],[])
+[applying exec] = iexec (LOAD Vname) (0,fromList [(Vname,Val)],[])
+[applying iexec] = (1,fromList [(Vname,Val)],[Val])
+
+(length (acomp (V Vname)), fromList [(Vname,Val)], [aval (V Vname) (fromList [(Vname,Val)]) ])
+[applying acomp] = (length [LOAD Vname], (fromList [(Vname,Val)]), [aval (V Vname) (fromList [(Vname,Val)])])
+[applying aval] = (length [LOADI Val]), (fromList [(Vname,Val)]), [Val])
+[applying length] = (1,fromList [(Vname,Val)],[Val])
+
+Therefore we can say that: exec (acomp (V Vname)) (0,fromList [(Vname,Val)],[]) == (length (acomp (V Vname)), fromList [(Vname,Val)], [aval (V Vname) (fromList [(Vname,Val)]) ]) -> True
+
+//
+
+Inductive Case 3: Case of acomp has (Plus (N Val) (V Vname)) (order does not matter) (state should not be empty) 
+
+exec (acomp (Plus (N Val1) (V Vname))) (0,fromList [(Vname,Val2)],[]) -> Config
+[applying acomp] = exec [LOADI Val1, LOAD Vname, ADD] (0,fromList [(Vname,Val2)],[])
+[applying exec] = iexec (LOADI Val1) (0,fromList [(Vname,Val2)],[]) 
+[applying iexec] = iexec (LOAD Vname) (1,fromList [(Vname,Val2)],[Val1]) 
+[applying iexec] = iexec (ADD) (2,fromList [(Vname,Val2)],[Val1,Val2])
+[applying iexec] = (3,fromList [(Vname,Val2)],[Val1 + Val2])
+
+(length (acomp (Plus (N Val1) (V Vname))), fromList [(Vname,Val2)], [aval (Plus (N Val1) (V Vname)) (fromList [(Vname,Val2)])])
+[applying acomp] = (length [LOADI Val1, LOAD Vname, ADD], fromList [(Vname,Val2)], [aval (Plus (N Val1) (V Vname)) (fromList [(Vname,Val2)])])
+[applying aval] = (length [LOADI Val1, LOAD Vname, ADD], fromList [(Vname,Val2)], [Val1 + Val2])
+[applying length] = (3,fromList [(Vname,Val2)],[Val1 + Val2])
+
+Therefore we can say that: exec (acomp (Plus (N Val1) (V Vname))) (0,fromList [(Vname,Val2)],[]) == (length (acomp (Plus (N Val1) (V Vname))), fromList [(Vname,Val2)], [aval (Plus (N Val1) (V Vname)) (fromList [(Vname,Val2)])]) -> True
+
+//
+
+Inductive Case 4: Case of acomp has (Plus (N Val1) (N Val2)) (does not depend on state, so it can be empty)
+
+exec (acomp (Plus (N Val1) (N Val2))) (0,empty,[]) -> Config
+[applying acomp] = exec [LOADI Val1, LOADI Val2, ADD] (0,empty,[])
+[applying exec] = iexec (LOADI Val1) (0,empty,[])
+[applying iexec] = iexec (LOADI Val2) (1,empty,[Val1]) 
+[applying iexec] = iexec (ADD) (2,empty,[Val1, Val2]) 
+[applying iexec] = (3,empty,[Val1 + Val2]) 
+
+(length (acomp (Plus (N Val1) (N Val2))), empty, [aval (Plus (N Val1) (N Val2)) empty])
+[applying acomp] = (length [LOADI Val1, LOADI Val2, ADD], empty, [aval (Plus (N Val1) (N Val2)) empty])
+[applying aval] = (length [LOADI Val1, LOADI Val2, ADD], empty, [Val1 + Val2])
+[applying length] = (3,empty,[Val1 + Val2]) 
+
+Therefore we can say that: exec (acomp (Plus (N Val1) (N Val2))) (0,empty,[]) == (length (acomp (Plus (N Val1) (N Val2))), empty, [aval (Plus (N Val1) (N Val2)) empty]) -> True
+
+//
+
+Inductive Case 5: Case of acomp has (Plus (V Vname1) (V Vname2)) (this case require 2 elements in state, so it can gets its values)
+
+exec (acomp (Plus (V Vname1) (V Vname2))) (0,fromList [(Vname1,Val1),(Vname2,Val2)],[]) -> Config
+[applying acomp] = exec [LOAD Vname1, LOAD Vname2, ADD] (0,fromList [(Vname1,Val1),(Vname2,Val2)],[])
+[applying exec] = iexec (LOAD Vname1) (0,fromList [(Vname1,Val1),(Vname2,Val2)],[])
+[applying iexec] = iexec (LOAD Vname2) (1,fromList [(Vname1,Val1),(Vname2,Val2)],[Val1])
+[applying iexec] = iexec (ADD) (2,fromList [(Vname1,Val1),(Vname2,Val2)],[Val1, Val2])
+[applying iexec] = (3,fromList [(Vname1,Val1),(Vname2,Val2)],[Val1 + Val2])
+
+(length (acomp (Plus (V Vname1) (V Vname2))), fromList [(Vname1,Val1),(Vname2,Val2)], [aval (Plus (V Vname1) (V Vname2)) (fromList [(Vname1,Val1),(Vname2,Val2)])])
+[applying acomp] = (length [LOAD Vname1, LOAD Vname2, ADD]), fromList [(Vname1,Val1),(Vname2,Val2)], [aval (Plus (V Vname1) (V Vname2)) fromList [(Vname1,Val1),(Vname2,Val2)]])
+[applying aval] = (length [LOAD Vname1, LOAD Vname2, ADD]), fromList [(Vname1,Val1),(Vname2,Val2)], [Val1 + Val2])
+[applying length] = (3,fromList [(Vname1,Val1),(Vname2,Val2)],[Val1 + Val2])
+
+Therefore we can say that: exec (acomp (Plus (V Vname1) (V Vname2))) (0,fromList [(Vname1,Val1),(Vname2,Val2)],[]) == (length (acomp (Plus (V Vname1) (V Vname2))), fromList [(Vname1,Val1),(Vname2,Val2)], [aval (Plus (V Vname1) (V Vname2)) (fromList [(Vname1,Val1),(Vname2,Val2)])]) -> True
+
+//
+
+Example function (function and output) to proof that it works within the application:
+exec (acomp (Plus (N 1) (N 6))) (0,mempty,[]) == (length (acomp (Plus (N 1) (N 6))), mempty, [aval (Plus (N 1) (N 6)) mempty])
+Output:
+(3,fromList [],[7]) == (3,(),[7]) -> True
+The ouput proofs that the program compiles correctly and does all its interpretation in the correct order with the correct "State" output
